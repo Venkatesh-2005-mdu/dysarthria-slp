@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AuthForm.css";
 
 function RegisterForm() {
@@ -7,9 +8,15 @@ function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const navigate = useNavigate();
+
   const handleRegister = (e) => {
     e.preventDefault();
+
     console.log("Registering:", { name, clinic, email, password });
+
+    // redirect to dashboard
+    navigate("/dashboard");
   };
 
   return (

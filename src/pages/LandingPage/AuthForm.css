@@ -34,6 +34,7 @@
   font-size: 15px;
   transition: 0.25s ease;
   outline: none;
+  color: black;
 }
 
 .auth-input-group input:focus {

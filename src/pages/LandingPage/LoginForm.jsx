@@ -1,13 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AuthForm.css";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const navigate = useNavigate();
+
   const handleLogin = (e) => {
     e.preventDefault();
+
     console.log("Logging in:", { email, password });
+
+    // redirect to dashboard
+    navigate("/dashboard");
   };
 
   return (
