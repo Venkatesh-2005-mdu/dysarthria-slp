@@ -1,250 +1,289 @@
-import React, { useState, useEffect } from "react";
-import "./Patient.css";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./AddPatient.css";
 
-/* Assessment page (keeps its sticky header but now shows reference number) */
-const AssessmentPage = ({ name, age, gender, reference }) => {
+// -------------------- HEADER --------------------
+const ResponsiveHeader = ({ name, age, gender }) => {
   return (
-    <div className="assessment-container">
-      <div className="patient-header">
-        <div className="patient-header-left">
-          <h3 className="ph-name">{name || "—"}</h3>
-          <p className="ph-meta">Age: <strong>{age || "-"}</strong></p>
-          <p className="ph-meta">Gender: <strong>{gender || "-"}</strong></p>
-        </div>
+    <div className="patient-header">
+      <h3>Patient: {name}</h3>
+      <h3>Age: {age}</h3>
+      <h3>Gender: {gender}</h3>
+    </div>
+  );
+};
 
-        <div className="patient-header-right">
-          <p className="ph-ref">Ref: <strong>{reference}</strong></p>
-          <p className="ph-time">Session: <strong>{new Date().toLocaleDateString()}</strong></p>
-        </div>
-      </div>
+// -------------------- STATUS PAGE --------------------
+const StatusPage = ({ name, age, gender, onNext }) => {
+  const [mentalStatus, setMentalStatus] = useState("");
+  const [physicalStatus, setPhysicalStatus] = useState("");
+  const [emotionalStatus, setEmotionalStatus] = useState("");
+  const [cognitiveStatus, setCognitiveStatus] = useState("");
+  const [memory, setMemory] = useState("");
 
-      <div className="test-content glass-panel">
-        <h2>Dysarthria Assessment Protocol</h2>
+  return (
+    <div className="status-container">
+      <ResponsiveHeader name={name} age={age} gender={gender} />
+
+      <div className="content-area">
+        <h2 className="title">Clinical Status Assessment</h2>
 
         <div className="assessment-section">
-          <h3>1. Respiration Assessment</h3>
-          <label className="inline-label">Maximum Phonation Time (MPT) on /a/ (seconds):
-            <input type="number" placeholder="Seconds" />
-          </label>
-        </div>
-
-        <div className="assessment-section">
-          <h3>2. Phonation Assessment</h3>
-          <label className="inline-label">Voice Quality:
-            <select>
-              <option>Normal</option>
-              <option>Breathy</option>
-              <option>Strained</option>
-              <option>Hoarse</option>
-            </select>
-          </label>
+          <h3 className="section-title">Mental Status</h3>
+          <textarea
+            rows="4"
+            value={mentalStatus}
+            onChange={(e) => setMentalStatus(e.target.value)}
+            className="detail-textarea"
+          />
         </div>
 
         <div className="assessment-section">
-          <h3>3. Articulation Assessment (DDK Rates)</h3>
-          <label className="inline-label">Rapid /pʌtʌkʌ/ Repetition (syll/sec):
-            <input type="number" placeholder="Syllables/sec" />
-          </label>
+          <h3 className="section-title">Physical Status</h3>
+          <textarea
+            rows="4"
+            value={physicalStatus}
+            onChange={(e) => setPhysicalStatus(e.target.value)}
+            className="detail-textarea"
+          />
         </div>
 
-        <div className="assessment-actions">
-          <button className="btn btn-primary save-test-button">Save Assessment</button>
-          <button className="btn btn-outline">Export Report</button>
+        <div className="assessment-section">
+          <h3 className="section-title">Emotional Status</h3>
+          <textarea
+            rows="4"
+            value={emotionalStatus}
+            onChange={(e) => setEmotionalStatus(e.target.value)}
+            className="detail-textarea"
+          />
         </div>
+
+        <div className="assessment-section">
+          <h3 className="section-title">Cognitive Status</h3>
+          <textarea
+            rows="4"
+            value={cognitiveStatus}
+            onChange={(e) => setCognitiveStatus(e.target.value)}
+            className="detail-textarea"
+          />
+        </div>
+
+        <div className="assessment-section">
+          <h3 className="section-title">Memory</h3>
+          <textarea
+            rows="4"
+            value={memory}
+            onChange={(e) => setMemory(e.target.value)}
+            className="detail-textarea"
+          />
+        </div>
+
+        <button className="primary-button" onClick={onNext}>
+          Next: Sensory Assessment ➡
+        </button>
       </div>
     </div>
   );
 };
 
-/* Utility: generate reference like PT-20251205-0246 */
-const generateRef = () => {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  const rand = Math.floor(1000 + Math.random() * 9000); // 4 digits
-  return `PT-${y}${m}${d}-${rand}`;
+// -------------------- SENSORY ASSESSMENT --------------------
+const AssessmentPage = ({ name, age, gender }) => {
+  const navigate = useNavigate();
+  const [hearingInput, setHearingInput] = useState("");
+  const [visionInput, setVisionInput] = useState("");
+
+  const handleSave = () => {
+    // navigate to YOUR route (explicitly use the path you provided)
+    navigate("/assessmenthome");
+  };
+
+  return (
+    <div className="assessment-container">
+      <ResponsiveHeader name={name} age={age} gender={gender} />
+
+      <div className="content-area">
+        <h2 className="title">Sensory Assessment</h2>
+
+        <div className="assessment-section">
+          <h3 className="section-title">Hearing Status</h3>
+          <textarea
+            rows="4"
+            value={hearingInput}
+            onChange={(e) => setHearingInput(e.target.value)}
+            className="detail-textarea"
+          />
+        </div>
+
+        <div className="assessment-section">
+          <h3 className="section-title">Vision Status</h3>
+          <textarea
+            rows="4"
+            value={visionInput}
+            onChange={(e) => setVisionInput(e.target.value)}
+            className="detail-textarea"
+          />
+        </div>
+
+        <button className="primary-button save-test-button" onClick={handleSave}>
+          Save Assessment ✔
+        </button>
+      </div>
+    </div>
+  );
 };
 
-const Patient = () => {
+// -------------------- MAIN ADD PATIENT --------------------
+const AddPatient = () => {
+  const navigate = useNavigate();
+
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isStatusScreen, setIsStatusScreen] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("Male");
   const [impression, setImpression] = useState("");
   const [history, setHistory] = useState("");
   const [prevHistory, setPrevHistory] = useState("");
-  const [reference, setReference] = useState("");
 
-  // keep a small animation trigger for summary entrance
-  const [showSummary, setShowSummary] = useState(false);
-
-  useEffect(() => {
-    if (isSubmitted) {
-      setShowSummary(true);
-    }
-  }, [isSubmitted]);
-
-  const handleAddPatient = () => {
-    if (name && age && gender) {
-      if (!reference) setReference(generateRef());
-      setIsSubmitted(true);
-      setShowSummary(true);
-    } else {
-      alert("Please fill Name, Age and Gender.");
-    }
+  const startSensoryAssessment = () => {
+    setIsTesting(true);
   };
 
-  const handleStartAssessment = () => {
-    setIsTesting(true);
-    // ensure reference exists
-    if (!reference) setReference(generateRef());
+  const handleAddPatient = () => {
+    if (name && age) {
+      setIsSubmitted(true);
+    }
   };
 
   const renderForm = () => (
-    <div className="form-wrapper glass-panel slide-up">
-      <h2 className="form-title">Patient Information</h2>
+    <div className="content-area">
+      <h2 className="title">Patient Information</h2>
 
       <div className="form-grid">
         <div className="column-left">
           <div className="patient-detail">
-            <label htmlFor="name">Name</label>
+            <label>Name:</label>
             <input
-              id="name"
-              className="detail-input"
               type="text"
+              className="detail-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Full name"
             />
           </div>
 
           <div className="patient-detail">
-            <label htmlFor="age">Age</label>
+            <label>Age:</label>
             <input
-              id="age"
-              className="detail-input"
               type="number"
+              className="detail-input"
               value={age}
               onChange={(e) => setAge(e.target.value)}
-              placeholder="Years"
             />
           </div>
 
           <div className="patient-detail">
-            <label htmlFor="gender">Gender</label>
+            <label>Gender:</label>
             <select
-              id="gender"
-              className="detail-select"
+              className="detail-input"
               value={gender}
               onChange={(e) => setGender(e.target.value)}
             >
               <option>Male</option>
               <option>Female</option>
               <option>Other</option>
-              <option>Prefer not to say</option>
             </select>
           </div>
         </div>
 
         <div className="column-right">
           <div className="patient-detail full-width">
-            <label htmlFor="impression">Clinical Impression</label>
+            <label>Clinical Impression:</label>
             <textarea
-              id="impression"
               className="detail-textarea"
+              rows="3"
               value={impression}
               onChange={(e) => setImpression(e.target.value)}
-              rows="3"
             />
           </div>
 
           <div className="patient-detail full-width">
-            <label htmlFor="history">Brief History</label>
+            <label>Brief History:</label>
             <textarea
-              id="history"
               className="detail-textarea"
+              rows="3"
               value={history}
               onChange={(e) => setHistory(e.target.value)}
-              rows="3"
             />
           </div>
 
           <div className="patient-detail full-width">
-            <label htmlFor="prevHistory">Previous Medical History</label>
+            <label>Previous Medical History:</label>
             <textarea
-              id="prevHistory"
               className="detail-textarea"
+              rows="3"
               value={prevHistory}
               onChange={(e) => setPrevHistory(e.target.value)}
-              rows="3"
             />
           </div>
         </div>
       </div>
 
-      <div className="form-actions">
-        <button className="add-patient-button btn-primary" onClick={handleAddPatient}>
-          Add Patient
-        </button>
-      </div>
+      <button className="primary-button" onClick={handleAddPatient}>
+        Add Patient
+      </button>
     </div>
   );
 
   const renderSummary = () => (
-    <div className="summary-panel glass-panel slide-up-delayed">
-      <div className="summary-header">
-        <div>
-          <h2>Patient Details Saved</h2>
-          <p className="ref-line">Reference Number: <strong>{reference}</strong></p>
-        </div>
-        <div className="summary-meta">
-          <p><strong>{name}</strong></p>
-          <p>Age: {age} • {gender}</p>
-        </div>
-      </div>
+    <div className="patient-summary content-area">
+      <h2 className="title">Patient Details Saved!</h2>
 
-      <div className="summary-body">
-        <div className="summary-block">
-          <h4>Clinical Impression</h4>
-          <p>{impression || "None recorded"}</p>
-        </div>
+      <div><strong>Name:</strong> {name}</div>
+      <div><strong>Age:</strong> {age}</div>
+      <div><strong>Gender:</strong> {gender}</div>
 
-        <div className="summary-block">
-          <h4>Brief History</h4>
-          <p>{history || "None recorded"}</p>
-        </div>
-
-        <div className="summary-block">
-          <h4>Previous Medical History</h4>
-          <p>{prevHistory || "None recorded"}</p>
-        </div>
-      </div>
+      <div><strong>Clinical Impression:</strong><p>{impression}</p></div>
+      <div><strong>Brief History:</strong><p>{history}</p></div>
+      <div><strong>Prev Medical History:</strong><p>{prevHistory}</p></div>
 
       <div className="summary-actions">
-        <button className="add-patient-button start-test-button btn-primary" onClick={handleStartAssessment}>
-          Start Dysarthria Assessment ➜
+        <button
+          className="primary-button"
+          onClick={() => setIsStatusScreen(true)}
+        >
+          Next ➡
         </button>
 
-        <button className="add-patient-button back-button btn-outline" onClick={() => setIsSubmitted(false)}>
-          Edit Patient Details
+        <button
+          className="secondary-button"
+          onClick={() => setIsSubmitted(false)}
+        >
+          Edit
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="patient-page">
-      {!isTesting ? (
-        <>
-          {!isSubmitted ? renderForm() : renderSummary()}
-        </>
+    <div className="patient-card">
+      {isTesting ? (
+        <AssessmentPage name={name} age={age} gender={gender} />
+      ) : isStatusScreen ? (
+        <StatusPage
+          name={name}
+          age={age}
+          gender={gender}
+          onNext={startSensoryAssessment}
+        />
+      ) : isSubmitted ? (
+        renderSummary()
       ) : (
-        <AssessmentPage name={name} age={age} gender={gender} reference={reference} />
+        renderForm()
       )}
     </div>
   );
 };
 
-export default Patient;
+export default AddPatient;

@@ -36,7 +36,7 @@ function Dashboard() {
         {/* ADD PATIENT */}
         <div
           className="dash-card big-card"
-          onClick={() => navigate("/addpatient")}
+          onClick={() => navigate("/Addpatient")}
         >
           <h2>➕ Add New Patient</h2>
           <p>
@@ -60,7 +60,7 @@ function Dashboard() {
         {/* ASSESSMENTS */}
         <div
           className="dash-card big-card"
-          onClick={() => navigate("/assessments")}
+          onClick={() => navigate("/Addpatient")}
         >
           <h2>📝 Assessments & Tasks</h2>
           <p>

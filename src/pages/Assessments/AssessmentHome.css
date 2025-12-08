@@ -1,0 +1,108 @@
+/* Background */
+.assess-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 50px 90px;
+  background: linear-gradient(180deg, #f3f8ff 0%, #ffffff 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeInPage 0.6s ease;
+}
+
+/* Header */
+.assess-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.assess-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #0f3258;
+  letter-spacing: -0.5px;
+}
+
+.assess-sub {
+  margin-top: 6px;
+  color: #5c7b9a;
+  font-size: 17px;
+}
+
+/* Cards Grid */
+.assess-grid {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+}
+
+/* Cards */
+.assess-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 30px 26px;
+  box-shadow: 0 12px 34px rgba(12, 35, 70, 0.06);
+  border: 1px solid rgba(18, 59, 110, 0.08);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(25px);
+  transition: all 0.28s ease;
+  animation: cardFadeUp 0.55s forwards ease-out;
+}
+
+/* Hover */
+.assess-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 55px rgba(12, 35, 70, 0.13);
+}
+
+/* Mobile tap effect */
+.assess-card:active {
+  transform: scale(0.98);
+}
+
+/* Card Content */
+.assess-card-title {
+  font-size: 22px;
+  color: #0f3258;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.assess-card-desc {
+  font-size: 14.5px;
+  color: #5e7d9f;
+  line-height: 1.45;
+}
+
+/* Animations */
+@keyframes cardFadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInPage {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .assess-page {
+    padding: 40px 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .assess-title {
+    font-size: 36px;
+  }
+  
+  .assess-card {
+    padding: 22px;
+  }
+}
