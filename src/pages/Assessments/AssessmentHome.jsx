@@ -39,19 +39,39 @@ export default function AssessmentHome() {
   ];
 
   return (
-    <div className="assess-page">
-      <header className="assess-header">
-        <h1 className="assess-title">Assessment Tasks</h1>
-        <p className="assess-sub">
-          Select an assessment to begin your evaluation.
+    <div className="assess-wrapper">
+      {/* Premium Navbar */}
+      <nav className="assess-navbar">
+        <div className="navbar-left">
+          <button className="nav-back-btn" onClick={() => navigate("/dashboard")}>
+            ← Back
+          </button>
+          <h2 className="navbar-title">Assessment Tasks</h2>
+        </div>
+      </nav>
+
+      {/* Breadcrumb Navigation */}
+      <div className="assess-breadcrumb">
+        <span>Dashboard</span>
+        <span className="breadcrumb-separator">›</span>
+        <span className="breadcrumb-current">Assessments</span>
+      </div>
+
+      {/* Instructions Card */}
+      <div className="assess-instructions glass-card">
+        <div className="instructions-header">
+          <h3 className="instructions-title">Select Your Assessment</h3>
+        </div>
+        <p className="instructions-subtitle">
+          Choose from our comprehensive suite of speech-language pathology assessments. Each test provides detailed metrics for clinical evaluation.
         </p>
-      </header>
+      </div>
 
       <div className="assess-grid">
         {tests.map((t, i) => (
           <div
             key={t.id}
-            className="assess-card"
+            className="assess-card glass-card"
             style={{ animationDelay: `${i * 120}ms` }}
             onClick={() => navigate(`/assess/${t.id}`)}
           >

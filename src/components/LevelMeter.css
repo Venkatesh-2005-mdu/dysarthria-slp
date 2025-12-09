@@ -1,0 +1,79 @@
+/* LevelMeter Component Styles */
+
+.level-meter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.level-meter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f3258;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.level-meter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.level-meter-bar {
+  flex: 1;
+  height: 20px;
+  background: linear-gradient(90deg, #f0f4f8, #e5eef7);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(18, 59, 110, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.level-meter-fill {
+  height: 100%;
+  border-radius: 9px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.level-meter-value {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 50px;
+  text-align: right;
+}
+
+.level-meter-number {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f3258;
+}
+
+.level-meter-unit {
+  font-size: 12px;
+  color: #5c7b9a;
+  font-weight: 500;
+}
+
+.level-meter-reference {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.level-meter-status {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.level-meter-range {
+  color: #5c7b9a;
+  font-size: 10px;
+}

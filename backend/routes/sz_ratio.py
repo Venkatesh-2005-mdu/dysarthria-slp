@@ -1,25 +1,49 @@
-from fastapi import APIRouter, UploadFile, File
-from core.phonation_utils import extract_duration, save_audio
-import os
+from fastapi import APIRouter
+from pydantic import BaseModel
+import numpy as np
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads/sz_test"
+
+class AudioData(BaseModel):
+    type: str
+    audio_data: list
+    sample_rate: int
 
 
-@router.post("/sz/analyze")
-async def analyze_sz(type: str, audio: UploadFile = File(...)):
+@router.post("/analyze")
+async def analyze_sz(data: AudioData):
     """
-    type = 's' or 'z'
+    Analyze S/Z audio from decoded PCM data
+    Expects: {type: 's' or 'z', audio_data: float[], sample_rate: int}
     """
-    filename = f"{type}_{audio.filename}"
-    save_path = os.path.join(UPLOAD_DIR, filename)
+    try:
+        # Convert audio data to numpy array
+        audio_array = np.array(data.audio_data, dtype=np.float32)
+        sr = data.sample_rate
+        sound_type = data.type
 
-    save_audio(audio.file, save_path)
+        # Calculate duration
+        duration = len(audio_array) / sr
+        duration = round(duration, 2)
 
-    duration = extract_duration(save_path)
+        # Downsample for waveform display
+        max_points = 3000
+        factor = max(1, len(audio_array) // max_points)
+        waveform = audio_array[::factor].tolist()
 
-    return {
-        "type": type,
-        "duration_sec": duration
-    }
+        return {
+            "type": sound_type,
+            "duration_sec": duration,
+            "sampling_rate": sr,
+            "waveform": waveform
+        }
+    except Exception as e:
+        print(f"analyze_sz error: {e}")
+        return {
+            "type": "error",
+            "duration_sec": 0,
+            "sampling_rate": 16000,
+            "waveform": [],
+            "error": str(e)
+        }

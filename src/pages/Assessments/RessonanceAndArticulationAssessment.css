@@ -1,7 +1,6 @@
-/* ======================== PHONATION ASSESSMENT - PREMIUM DESIGN ======================== */
+/* ======================== RESONANCE & ARTICULATION - PREMIUM DESIGN ======================== */
 
-/* Main Container */
-.phonation-wrapper {
+.ra-wrapper {
   width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%);
@@ -10,8 +9,8 @@
   overflow-x: hidden;
 }
 
-/* ======================== PREMIUM NAVBAR ======================== */
-.phonation-navbar {
+/* NAVBAR */
+.ra-navbar {
   position: fixed;
   top: 0;
   left: 0;
@@ -27,7 +26,7 @@
   align-items: center;
 }
 
-.phonation-navbar-content {
+.ra-navbar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -78,41 +77,6 @@
   justify-content: flex-end;
 }
 
-.patient-type-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 220px;
-}
-
-.patient-type-selector label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #3b82f6;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.patient-type-selector select {
-  padding: 8px 12px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 255, 0.5));
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 8px;
-  color: #1e40af;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(20px);
-}
-
-.patient-type-selector select:hover,
-.patient-type-selector select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  outline: none;
-}
-
 .nav-progress {
   display: flex;
   flex-direction: column;
@@ -143,8 +107,8 @@
   border-radius: 2px;
 }
 
-/* ======================== BREADCRUMB ======================== */
-.phonation-breadcrumb {
+/* BREADCRUMB */
+.ra-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -154,14 +118,6 @@
   font-weight: 500;
   background: rgba(255, 255, 255, 0.4);
   border-bottom: 1px solid rgba(59, 130, 246, 0.08);
-}
-
-.phonation-breadcrumb span {
-  transition: color 0.3s ease;
-}
-
-.phonation-breadcrumb span:hover {
-  color: #3b82f6;
 }
 
 .breadcrumb-sep {
@@ -174,8 +130,8 @@
   font-weight: 700;
 }
 
-/* ======================== INSTRUCTIONS CARD ======================== */
-.phonation-instructions {
+/* INSTRUCTIONS */
+.ra-instructions {
   margin: 40px 120px;
   padding: 32px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 245, 255, 0.5) 100%);
@@ -228,10 +184,9 @@
   font-weight: 500;
 }
 
-/* ======================== SECTION STYLES ======================== */
-.phonation-section {
+/* SECTIONS */
+.ra-section {
   padding: 40px 120px;
-  max-width: 100%;
 }
 
 .section-header {
@@ -255,15 +210,22 @@
   font-weight: 500;
 }
 
-/* ======================== VOWEL GRID & CARDS ======================== */
-.vowel-grid {
+/* RESONANCE CONTAINER */
+.resonance-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
   margin-bottom: 40px;
 }
 
-.vowel-card {
+@media (max-width: 1024px) {
+  .resonance-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resonance-recording-card,
+.resonance-notes-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 245, 255, 0.4) 100%);
   backdrop-filter: blur(20px);
   border-radius: 20px;
@@ -274,15 +236,12 @@
   flex-direction: column;
   gap: 16px;
   opacity: 0;
-  transform: translateY(20px);
   animation: fadeInUp 0.6s ease-out forwards;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.vowel-card:nth-child(1) { animation-delay: 0s; }
-.vowel-card:nth-child(2) { animation-delay: 0.1s; }
-.vowel-card:nth-child(3) { animation-delay: 0.2s; }
-.vowel-card:nth-child(4) { animation-delay: 0.3s; }
+.resonance-recording-card:nth-child(1) { animation-delay: 0s; }
+.resonance-notes-card { animation-delay: 0.1s; }
 
 @keyframes fadeInUp {
   from {
@@ -295,13 +254,6 @@
   }
 }
 
-.vowel-card:hover {
-  transform: translateY(-8px);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 245, 255, 0.6) 100%);
-  box-shadow: 0 32px 80px rgba(12, 35, 70, 0.12);
-  border-color: rgba(59, 130, 246, 0.25);
-}
-
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -309,9 +261,9 @@
   gap: 16px;
 }
 
-.card-vowel-label {
-  font-size: 28px;
-  font-weight: 800;
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
   color: #1e40af;
   margin: 0;
 }
@@ -338,14 +290,18 @@
 }
 
 @keyframes recPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
-  }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.card-instructions {
+  font-size: 14px;
+  color: #475569;
+  padding: 12px 16px;
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 10px;
+  border-left: 3px solid #3b82f6;
+  line-height: 1.5;
 }
 
 .card-waveform {
@@ -363,7 +319,6 @@
 .card-controls {
   display: flex;
   gap: 12px;
-  align-items: center;
 }
 
 .btn-record,
@@ -393,22 +348,12 @@
 
 .btn-record.recording {
   background: linear-gradient(135deg, #ef4444, #dc2626);
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
   animation: pulse 1s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-.btn-record.completed {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
 }
 
 .btn-play {
@@ -425,145 +370,183 @@
 .btn-play.disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
-.card-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  background: rgba(16, 185, 129, 0.08);
-  border-radius: 10px;
-  border-left: 3px solid #10b981;
+.resonance-metrics {
+  padding-top: 12px;
+  border-top: 1px solid rgba(59, 130, 246, 0.08);
 }
 
-.status-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: #059669;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: rgba(16, 185, 129, 0.15);
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.status-value {
-  font-size: 13px;
-  color: #059669;
-  font-weight: 600;
-}
-
-/* ======================== RESULTS CONTAINER ======================== */
-.results-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 28px;
-  margin-bottom: 40px;
-}
-
-.results-box {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 245, 255, 0.4) 100%);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 32px;
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  box-shadow: 0 20px 60px rgba(12, 35, 70, 0.08);
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  opacity: 0;
-  animation: fadeInUp 0.6s ease-out 0.2s forwards;
-}
-
-.results-box.highlight {
-  border: 2px solid rgba(59, 130, 246, 0.25);
-  background: linear-gradient(135deg, rgba(240, 245, 255, 0.8) 0%, rgba(224, 242, 254, 0.4) 100%);
-}
-
-.results-box:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 32px 80px rgba(12, 35, 70, 0.12);
-}
-
-.results-subtitle {
-  font-size: 16px;
+.resonance-metrics h4 {
+  font-size: 14px;
   font-weight: 700;
   color: #1e40af;
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.mpd-meters {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.meter-group {
+.metric-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
-.meter-sound-label {
-  font-size: 12px;
+.metric-item label {
+  font-size: 11px;
   font-weight: 700;
   color: #3b82f6;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
-.best-mpd-display {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  text-align: center;
+.metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e40af;
 }
 
-.best-mpd-value {
-  font-size: 56px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #3b82f6, #06b6d4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-}
-
-.clinical-reference {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+.characteristics {
+  padding: 12px;
   background: rgba(59, 130, 246, 0.05);
-  border-radius: 12px;
+  border-radius: 8px;
   border-left: 3px solid #3b82f6;
 }
 
-.reference-text {
+.characteristics label {
   font-size: 11px;
   font-weight: 700;
-  color: #475569;
+  color: #3b82f6;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 6px;
 }
 
-.reference-range {
+.characteristics ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.characteristics li {
+  font-size: 13px;
+  color: #475569;
+  padding-left: 12px;
+  position: relative;
+}
+
+.characteristics li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: 700;
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1e40af;
+  background: rgba(255, 255, 255, 0.5);
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* AMR/SMR GRIDS */
+.ddk-subsection {
+  margin-bottom: 40px;
+}
+
+.subsection-title {
   font-size: 20px;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 8px 0;
+}
+
+.subsection-instruction {
+  font-size: 14px;
+  color: #475569;
+  margin: 0 0 20px 0;
+  padding: 12px 16px;
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 10px;
+  border-left: 3px solid #3b82f6;
+}
+
+.amr-grid,
+.smr-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.amr-card,
+.smr-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 245, 255, 0.4) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  box-shadow: 0 20px 60px rgba(12, 35, 70, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.amr-card:hover,
+.smr-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 32px 80px rgba(12, 35, 70, 0.12);
+}
+
+.card-sound-label {
+  font-size: 24px;
   font-weight: 800;
   color: #1e40af;
   margin: 0;
 }
 
-/* ======================== ACTION BUTTONS ======================== */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 245, 255, 0.4) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 20px;
+}
+
+/* ACTION BUTTONS */
 .action-buttons {
   display: flex;
   gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 0 0 60px 0;
+  padding: 40px 120px 60px;
 }
 
 .glass-btn {
@@ -594,64 +577,44 @@
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(240, 245, 255, 0.4));
   color: #1e40af;
   border: 2px solid rgba(59, 130, 246, 0.25);
-  backdrop-filter: blur(20px);
 }
 
 .btn-secondary:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 255, 0.6));
-  border-color: rgba(59, 130, 246, 0.4);
   transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
 }
 
-/* ======================== GLASS CARD UTILITY ======================== */
-.glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 245, 255, 0.4) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ======================== RESPONSIVE DESIGN ======================== */
+/* RESPONSIVE */
 @media (max-width: 1024px) {
-  .phonation-navbar {
+  .ra-navbar {
     padding: 0 80px;
   }
 
-  .navbar-right {
-    gap: 20px;
-  }
-
-  .phonation-breadcrumb,
-  .phonation-instructions,
-  .phonation-section {
+  .ra-breadcrumb,
+  .ra-instructions,
+  .ra-section {
     padding: 32px 80px;
   }
 
-  .vowel-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .action-buttons {
+    padding: 32px 80px 60px;
   }
 
-  .results-container {
-    grid-template-columns: 1fr;
+  .amr-grid,
+  .smr-container {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .phonation-navbar {
+  .ra-navbar {
     padding: 0 24px;
     height: 100px;
   }
 
-  .phonation-navbar-content {
+  .ra-navbar-content {
     flex-direction: column;
     gap: 16px;
-    align-items: flex-start;
-  }
-
-  .navbar-left {
-    width: 100%;
   }
 
   .navbar-right {
@@ -663,42 +626,14 @@
     display: none;
   }
 
-  .patient-type-selector {
-    min-width: 100%;
-  }
-
-  .phonation-breadcrumb {
-    padding: 12px 24px;
-    font-size: 12px;
-  }
-
-  .phonation-instructions,
-  .phonation-section {
+  .ra-breadcrumb,
+  .ra-instructions,
+  .ra-section {
     padding: 24px;
   }
 
-  .instruction-tips {
-    grid-template-columns: 1fr;
-  }
-
-  .vowel-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .vowel-card {
-    padding: 20px;
-  }
-
-  .card-vowel-label {
-    font-size: 24px;
-  }
-
-  .section-title {
-    font-size: 24px;
-  }
-
   .action-buttons {
+    padding: 24px;
     flex-direction: column;
   }
 
@@ -706,7 +641,20 @@
     min-width: 100%;
   }
 
-  .best-mpd-value {
-    font-size: 40px;
+  .resonance-container {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .amr-grid,
+  .smr-container {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 24px;
   }
 }

@@ -26,10 +26,48 @@ export default function RespiratoryAssessment() {
   };
 
   return (
-    <div className="resp-page">
-      <h1 className="resp-title">Respiratory System Assessment</h1>
+    <div className="resp-wrapper">
+      {/* Premium Navbar */}
+      <nav className="resp-navbar">
+        <div className="navbar-left">
+          <button className="nav-back-btn" onClick={() => navigate("/assessmenthome")}>
+            ← Back
+          </button>
+          <h2 className="navbar-title">Respiratory Assessment</h2>
+        </div>
+      </nav>
 
-      <form className="resp-form" onSubmit={handleSubmit}>
+      {/* Breadcrumb Navigation */}
+      <div className="resp-breadcrumb">
+        <span>Dashboard</span>
+        <span className="breadcrumb-separator">›</span>
+        <span>Assessments</span>
+        <span className="breadcrumb-separator">›</span>
+        <span className="breadcrumb-current">Respiratory</span>
+      </div>
+
+      {/* Instructions Card */}
+      <div className="resp-instructions glass-card">
+        <div className="instructions-header">
+          <h3 className="instructions-title">Assessment Guidelines</h3>
+        </div>
+        <div className="instructions-tips">
+          <div className="tip-item">
+            <span className="tip-icon">💨</span>
+            <p><strong>Breathing Pattern:</strong> Assess the primary breathing pattern (thoracic, clavicular, or abdominal) at rest.</p>
+          </div>
+          <div className="tip-item">
+            <span className="tip-icon">🗣️</span>
+            <p><strong>Speech Breathing:</strong> Evaluate breathing adequacy during connected speech and narrative tasks.</p>
+          </div>
+          <div className="tip-item">
+            <span className="tip-icon">⏱️</span>
+            <p><strong>Blowing Duration:</strong> Measure sustained blowing time as an indicator of respiratory support.</p>
+          </div>
+        </div>
+      </div>
+
+      <form className="resp-form glass-card" onSubmit={handleSubmit}>
         
         {/* Breathing Pattern */}
         <div className="resp-field">
@@ -75,8 +113,8 @@ export default function RespiratoryAssessment() {
           />
         </div>
 
-        <button type="submit" className="resp-btn">
-          Save Assessment
+        <button type="submit" className="resp-btn glass-btn">
+          💾 Save & Return Home
         </button>
       </form>
     </div>

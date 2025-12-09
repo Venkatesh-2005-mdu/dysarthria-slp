@@ -1,32 +1,57 @@
-from fastapi import APIRouter, UploadFile, File
-from core.phonation_utils import extract_duration, get_waveform, save_audio
-import os
+from fastapi import APIRouter
+from pydantic import BaseModel
+import numpy as np
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads/phonation"
+
+class AudioData(BaseModel):
+    vowel: str
+    audio_data: list
+    sample_rate: int
 
 
 @router.post("/phonation/analyze")
-async def analyze_phonation(vowel: str, audio: UploadFile = File(...)):
+async def analyze_phonation(data: AudioData):
     """
-    vowel = 'a' | 'e' | 'o' | 'u' | 'uhm'
+    Analyze phonation vowel from decoded PCM data
+    Expects: {vowel: 'a'|'ii'|'u'|'uhm', audio_data: float[], sample_rate: int}
     """
-    filename = f"{vowel}_{audio.filename}"
-    save_path = os.path.join(UPLOAD_DIR, filename)
+    try:
+        # Convert audio data to numpy array
+        audio_array = np.array(data.audio_data, dtype=np.float32)
+        sr = data.sample_rate
+        vowel = data.vowel
 
-    # save audio
-    save_audio(audio.file, save_path)
+        # Calculate duration
+        duration = len(audio_array) / sr
+        duration = round(duration, 2)
 
-    # duration
-    duration = extract_duration(save_path)
+        # Downsample for waveform display
+        max_points = 3000
+        factor = max(1, len(audio_array) // max_points)
+        waveform = audio_array[::factor].tolist()
 
-    # waveform samples
-    waveform, sr = get_waveform(save_path)
+        return {
+            "vowel": vowel,
+            "duration_sec": duration,
+            "sampling_rate": sr,
+            "waveform": waveform,
+        }
+    except Exception as e:
+        print(f"analyze_phonation error: {e}")
+        return {
+            "vowel": "error",
+            "duration_sec": 0,
+            "sampling_rate": 16000,
+            "waveform": [],
+            "error": str(e)
+        }
 
-    return {
-        "vowel": vowel,
-        "duration_sec": duration,
-        "sampling_rate": sr,
-        "waveform": waveform,
-    }
+
+@router.post("/upload/{vowel}")
+async def upload_phonation(vowel: str, data: AudioData):
+    """
+    Alternative endpoint for vowel upload
+    """
+    return await analyze_phonation(data)

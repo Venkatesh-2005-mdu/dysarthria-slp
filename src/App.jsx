@@ -6,6 +6,10 @@ import PatientHistory from "./pages/PatientHistory/PatientHistory";
 import AssessmentHome from "./pages/Assessments/AssessmentHome";
 import RespiratoryAssessment from "./pages/Assessments/RespiratoryAssessment";
 import PhonationAssessment from "./pages/Assessments/PhonationAssessment";
+import SZAssessment from "./pages/Assessments/SZAssessment";
+import RessonanceAndArticulationAssessment from "./pages/Assessments/RessonanceAndArticulationAssessment";
+import RateOfSpeechAssessment from "./pages/Assessments/RateOfSpeechAssessment";
+import ArticulationScreener from "./pages/Assessments/ArticulationScreener";
 
 function App() {
   return (
@@ -29,7 +33,13 @@ function App() {
 
         <Route path="/assess/phonation" element={<PhonationAssessment />} />
 
+        <Route path="/assess/sz-ratio" element={<SZAssessment />} />
 
+        <Route path="/assess/resonance" element={<RessonanceAndArticulationAssessment />} />
+
+        <Route path="/assess/rateofspeech" element={<RateOfSpeechAssessment />} />
+
+        <Route path="/assess/articulation" element={<ArticulationScreener />} />
 
       </Routes>
     </Router>

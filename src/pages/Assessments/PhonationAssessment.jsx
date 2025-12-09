@@ -1,42 +1,40 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import WaveformCanvas from "../../components/WaveformCanvas";
+import LevelMeter from "../../components/LevelMeter";
 import "./PhonationAssessment.css";
 
 /**
- * PhonationTest.jsx
- * Updated: Integrated backend upload to FastAPI:
- * POST http://localhost:8000/phonation/upload/{vowel}
+ * PhonationAssessment.jsx
+ * Updated: Vowel recording with MPD calculation and level meters
+ * Records only A, II, U, UHM for MPD calculation
  */
 
 const API_BASE = "http://localhost:8000";
 
-const ITEMS = [
-  { id: "a", label: "/a/" },
-  { id: "e", label: "/e/" },
-  { id: "i", label: "/i/" },
-  { id: "o", label: "/o/" },
-  { id: "u", label: "/u/" },
-  { id: "uhm", label: "uhm" },
-  { id: "s", label: "/s/" },
-  { id: "z", label: "/z/" },
+const VOWEL_ITEMS = [
+  { id: "a", label: "/A/" },
+  { id: "ii", label: "/II/" },
+  { id: "u", label: "/U/" },
+  { id: "uhm", label: "/UHM/" },
 ];
 
 const PhonationAssessment = () => {
   const navigate = useNavigate();
   const [permissionGranted, setPermissionGranted] = useState(null);
+  const [patientType, setPatientType] = useState("adult_female"); // adult_male, adult_female, child
+  
   const [stateMap, setStateMap] = useState(() =>
-    ITEMS.reduce((acc, it) => {
+    VOWEL_ITEMS.reduce((acc, it) => {
       acc[it.id] = {
         recording: false,
         audioUrl: null,
         blob: null,
         duration: 0,
-        voicedDuration: 0,
-        canvasReady: false,
-        rmsTimeline: [],
+        waveform: [],
+        samplingRate: 16000,
         isPlaying: false,
         backendDuration: null,
-        backendWaveform: [],
       };
       return acc;
     }, {})
@@ -49,7 +47,14 @@ const PhonationAssessment = () => {
   const timerRef = useRef(null);
   const [timer, setTimer] = useState(0);
 
-  // request mic permission on mount
+  // Reference ranges by patient type
+  const mpdReferences = {
+    adult_male: { min: 25, max: 35 },
+    adult_female: { min: 15, max: 25 },
+    child: { min: 6, max: 15 },
+  };
+
+  // Request microphone permission on mount
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ audio: true })
@@ -68,36 +73,84 @@ const PhonationAssessment = () => {
     };
   }, []);
 
-  /** -------------------------------
-   *  BACKEND UPLOAD FUNCTION
-   * ------------------------------- */
+  /**
+   * Upload audio blob to backend for analysis
+   */
   const uploadToBackend = async (itemId, blob) => {
     try {
-      const formData = new FormData();
-      formData.append("file", blob, `${itemId}.webm`);
+      // Decode audio to get raw PCM data
+      const arrayBuffer = await blob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ac.decodeAudioData(arrayBuffer);
+      const audioData = Array.from(decoded.getChannelData(0));
+      const sampleRate = decoded.sampleRate;
 
       const res = await fetch(`${API_BASE}/phonation/upload/${itemId}`, {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vowel: itemId,
+          audio_data: audioData,
+          sample_rate: sampleRate,
+        }),
       });
+
+      if (!res.ok) throw new Error("Backend upload failed");
 
       const response = await res.json();
 
-      // save backend results
+      // Save backend results
       setStateMap((prev) => ({
         ...prev,
         [itemId]: {
           ...prev[itemId],
-          backendDuration: response.duration,
-          backendWaveform: response.waveform,
+          backendDuration: response.duration_sec || response.duration,
+          waveform: response.waveform || [],
+          samplingRate: response.sampling_rate || 16000,
         },
       }));
+
+      console.log("Backend response:", response);
     } catch (err) {
       console.error("Backend upload failed:", err);
     }
   };
 
-  // start recording for an item
+  /**
+   * Analyze audio blob locally for waveform display
+   */
+  const analyzeAudioBlob = async (blob) => {
+    try {
+      const arrayBuffer = await blob.arrayBuffer();
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ac.decodeAudioData(arrayBuffer);
+      const data = decoded.getChannelData(0);
+      const duration = decoded.duration;
+      const sr = decoded.sampleRate;
+
+      // Downsample for display (max 2000 points)
+      const maxPoints = 2000;
+      const factor = Math.ceil(data.length / maxPoints);
+      const downsampled = [];
+      
+      for (let i = 0; i < data.length; i += factor) {
+        downsampled.push(data[i]);
+      }
+
+      return {
+        duration: parseFloat(duration.toFixed(2)),
+        waveform: downsampled,
+        samplingRate: sr,
+      };
+    } catch (e) {
+      console.error("analyzeAudioBlob error", e);
+      return { duration: 0, waveform: [], samplingRate: 16000 };
+    }
+  };
+
+  /**
+   * Start recording for a vowel item
+   */
   const startRecording = async (itemId) => {
     if (!streamRef.current) {
       try {
@@ -110,6 +163,7 @@ const PhonationAssessment = () => {
       }
     }
 
+    // Stop previous recording if any
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
@@ -132,10 +186,10 @@ const PhonationAssessment = () => {
       const blob = new Blob(chunksRef.current, { type: "audio/webm" });
       const url = URL.createObjectURL(blob);
 
-      // local analysis
-      const { duration, voicedDuration, rmsTimeline } = await analyzeAudioBlob(blob);
+      // Analyze audio locally
+      const { duration, waveform, samplingRate } = await analyzeAudioBlob(blob);
 
-      // update UI state
+      // Update UI state
       setStateMap((prev) => ({
         ...prev,
         [itemId]: {
@@ -144,13 +198,12 @@ const PhonationAssessment = () => {
           audioUrl: url,
           blob,
           duration,
-          voicedDuration,
-          rmsTimeline,
-          canvasReady: true,
+          waveform,
+          samplingRate,
         },
       }));
 
-      // upload to backend 🟢
+      // Upload to backend
       uploadToBackend(itemId, blob);
 
       setTimer(0);
@@ -164,212 +217,259 @@ const PhonationAssessment = () => {
     timerRef.current = setInterval(() => setTimer((t) => t + 0.1), 100);
   };
 
-  // stop recording
-  const stopRecording = (itemId) => {
+  /**
+   * Stop recording
+   */
+  const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
   };
 
+  /**
+   * Toggle recording for a vowel
+   */
   const toggleRecording = (id) => {
     const cur = stateMap[id]?.recording;
-    if (cur) stopRecording(id);
+    if (cur) stopRecording();
     else startRecording(id);
   };
 
-  async function analyzeAudioBlob(blob) {
-    try {
-      const arrayBuffer = await blob.arrayBuffer();
-      const ac = new (window.AudioContext || window.webkitAudioContext)();
-      const decoded = await ac.decodeAudioData(arrayBuffer);
-      const sampleRate = decoded.sampleRate;
-      const data = decoded.getChannelData(0);
-      const duration = decoded.duration;
-
-      const frameMs = 30;
-      const frameSize = Math.floor((frameMs / 1000) * sampleRate) || 512;
-      const hop = frameSize;
-
-      const rmsTimeline = [];
-      let voicedFrames = [];
-      for (let i = 0; i < data.length; i += hop) {
-        const frame = data.subarray(i, Math.min(i + frameSize, data.length));
-        let sum = 0;
-        for (let j = 0; j < frame.length; j++) sum += frame[j] * frame[j];
-        const rms = Math.sqrt(sum / (frame.length || 1));
-        rmsTimeline.push(rms);
-      }
-
-      const sorted = [...rmsTimeline].sort((a, b) => a - b);
-      const median = sorted[Math.floor(sorted.length / 2)] || 0;
-      const threshold = Math.max(median * 2.2, 0.0025);
-
-      let voicedDuration = 0;
-      for (let k = 0; k < rmsTimeline.length; k++) {
-        if (rmsTimeline[k] >= threshold) voicedDuration += frameMs / 1000;
-      }
-
-      if (voicedDuration > duration) voicedDuration = duration;
-
-      return {
-        duration: parseFloat(duration.toFixed(2)),
-        voicedDuration: parseFloat(voicedDuration.toFixed(2)),
-        rmsTimeline,
-      };
-    } catch (e) {
-      console.error("analyzeAudioBlob error", e);
-      return { duration: 0, voicedDuration: 0, rmsTimeline: [] };
-    }
-  }
-
-  async function drawWaveform(canvas, blob) {
-    if (!canvas || !blob) return;
-    try {
-      const arrayBuffer = await blob.arrayBuffer();
-      const ac = new (window.AudioContext || window.webkitAudioContext)();
-      const decoded = await ac.decodeAudioData(arrayBuffer);
-      const data = decoded.getChannelData(0);
-      const width = canvas.width;
-      const height = canvas.height;
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, width, height);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, width, height);
-
-      ctx.lineWidth = 1.8;
-      ctx.strokeStyle = "#1d3c6a";
-      ctx.beginPath();
-
-      const step = Math.ceil(data.length / width);
-      for (let i = 0; i < width; i++) {
-        const start = i * step;
-        let sum = 0, count = 0;
-        for (let j = 0; j < step && start + j < data.length; j++) {
-          sum += Math.abs(data[start + j]);
-          count++;
-        }
-        const v = count ? sum / count : 0;
-        const y = (1 - Math.min(1, v * 10)) * height;
-        if (i === 0) ctx.moveTo(i, y);
-        else ctx.lineTo(i, y);
-      }
-      ctx.stroke();
-
-      ctx.strokeStyle = "rgba(20,30,50,0.06)";
-      ctx.beginPath();
-      ctx.moveTo(0, height / 2);
-      ctx.lineTo(width, height / 2);
-      ctx.stroke();
-    } catch (e) {
-      console.error("drawWaveform error", e);
-    }
-  }
-
-  useEffect(() => {
-    ITEMS.forEach((it) => {
-      const meta = stateMap[it.id];
-      if (meta && meta.blob && meta.canvasReady) {
-        const canvas = document.getElementById(`canvas-${it.id}`);
-        if (canvas) {
-          drawWaveform(canvas, meta.blob);
-        }
-      }
-    });
-  }, [stateMap]);
-
+  /**
+   * Handle audio playback
+   */
   const handlePlay = async (id) => {
     const meta = stateMap[id];
     if (!meta?.audioUrl) return;
+
     const audio = new Audio(meta.audioUrl);
     setStateMap((prev) => ({ ...prev, [id]: { ...prev[id], isPlaying: true } }));
+    
     audio.onended = () => {
       setStateMap((prev) => ({ ...prev, [id]: { ...prev[id], isPlaying: false } }));
     };
+    
     audio.play();
   };
 
-  const getSZRatio = () => {
-    const s = stateMap["s"]?.voicedDuration || stateMap["s"]?.duration || 0;
-    const z = stateMap["z"]?.voicedDuration || stateMap["z"]?.duration || 0;
-    if (s === 0 || z === 0) return null;
-    return parseFloat((s / z).toFixed(2));
+  /**
+   * Get best MPD value (highest duration among vowels)
+   */
+  const getBestMPD = () => {
+    const durations = VOWEL_ITEMS.map((item) => stateMap[item.id]?.duration || 0);
+    return durations.length > 0 ? Math.max(...durations) : 0;
   };
 
+  /**
+   * Navigate to S/Z Assessment
+   */
+  const handleContinueToSZ = () => {
+    navigate("/assess/sz-ratio", { state: { patientType } });
+  };
+
+  /**
+   * Save and return home
+   */
   const handleFinish = () => {
     navigate("/assessmenthome");
   };
 
+  const bestMPD = getBestMPD();
+  const ref = mpdReferences[patientType];
+
   return (
-    <div className="assess-page">
-      <header className="assess-header">
-        <h1 className="assess-title">Phonation Test</h1>
-        <p className="assess-sub">
-          Record vowels and s/z to compute MPD and S/Z ratio. Each card is 1 recording item.
-        </p>
-      </header>
-
-      <div className="assess-grid phonation-grid">
-        {ITEMS.map((it, idx) => {
-          const meta = stateMap[it.id] || {};
-          return (
-            <div key={it.id} className="assess-card phonation-card" style={{ animationDelay: `${idx * 80}ms` }}>
-              <div className="assess-card-body">
-                <div className="card-head">
-                  <h3 className="assess-card-title">{it.label}</h3>
-                  <div className="rec-indicators">
-                    {meta.recording && <div className="rec-dot" aria-hidden="true" />}
-                    <div className="rec-timer">
-                      {meta.recording ? `${timer.toFixed(1)}s` : meta.duration ? `${meta.duration}s` : "—"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="wave-row">
-                  <canvas id={`canvas-${it.id}`} className="wave-canvas" width="600" height="80" />
-                </div>
-
-                <div className="controls-row">
-                  <button
-                    className={`rec-btn ${meta.recording ? "rec-active" : ""}`}
-                    onClick={() => toggleRecording(it.id)}
-                  >
-                    {meta.recording ? "Stop" : "Record"}
-                  </button>
-
-                  <button className="play-btn" disabled={!meta.audioUrl} onClick={() => handlePlay(it.id)}>
-                    Play
-                  </button>
-
-                  <div className="result-block">
-                    <div className="result-line"><strong>File:</strong> {meta.blob ? <span className="good">Ready</span> : "—"}</div>
-                    <div className="result-line"><strong>Duration:</strong> {meta.duration ? `${meta.duration}s` : "—"}</div>
-                    <div className="result-line"><strong>Voiced (MPD):</strong> {meta.voicedDuration ? `${meta.voicedDuration}s` : "—"}</div>
-                    <div className="result-line"><strong>Backend MPD:</strong> {meta.backendDuration ?? "—"}</div>
-                  </div>
-                </div>
+    <div className="phonation-wrapper">
+      {/* Premium Navbar */}
+      <nav className="phonation-navbar">
+        <div className="phonation-navbar-content">
+          <div className="navbar-left">
+            <button className="nav-back-btn" onClick={handleFinish}>← Back</button>
+            <h2 className="navbar-title">Phonation Assessment</h2>
+          </div>
+          <div className="navbar-right">
+            <div className="patient-type-selector">
+              <label>Patient Type:</label>
+              <select value={patientType} onChange={(e) => setPatientType(e.target.value)}>
+                <option value="adult_male">Adult Male (25-35s)</option>
+                <option value="adult_female">Adult Female (15-25s)</option>
+                <option value="child">Child (6-15s)</option>
+              </select>
+            </div>
+            <div className="nav-progress">
+              <span className="progress-label">Step 1 of 5</span>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: "20%" }} />
               </div>
             </div>
-          );
-        })}
+          </div>
+        </div>
+      </nav>
+
+      {/* Breadcrumb */}
+      <div className="phonation-breadcrumb">
+        <span onClick={handleFinish} style={{ cursor: "pointer", color: "#3b82f6" }}>Dashboard</span>
+        <span className="breadcrumb-sep">›</span>
+        <span>Assessments</span>
+        <span className="breadcrumb-sep">›</span>
+        <span className="breadcrumb-current">Phonation</span>
       </div>
 
-      <div className="phonation-summary">
-        <div className="sz-block">
-          <h4>S / Z Summary</h4>
-          <div className="sz-row">
-            <div><strong>/s/:</strong> {stateMap["s"]?.voicedDuration ?? "—"}s</div>
-            <div><strong>/z/:</strong> {stateMap["z"]?.voicedDuration ?? "—"}s</div>
-            <div><strong>Ratio (S/Z):</strong> {getSZRatio() ?? "—"}</div>
+      {/* Instructions Card */}
+      <div className="phonation-instructions glass-card">
+        <h2 className="instruction-title">How to Perform the Phonation Assessment</h2>
+        <p className="instruction-text">
+          You will record 4 vowel sounds (/A/, /II/, /U/, /UHM/) to calculate your Maximum Phonation Duration (MPD). 
+          Record each vowel once, maintaining a steady, comfortable pitch throughout the recording.
+        </p>
+        <div className="instruction-tips">
+          <div className="tip-item">
+            <span className="tip-icon">🎤</span>
+            <span>Speak clearly and maintain a steady sound</span>
+          </div>
+          <div className="tip-item">
+            <span className="tip-icon">⏱️</span>
+            <span>Record as long as you can comfortably maintain the vowel</span>
+          </div>
+          <div className="tip-item">
+            <span className="tip-icon">✅</span>
+            <span>Records will be analyzed automatically after each recording</span>
+          </div>
+        </div>
+      </div>
+
+      {/* VOWEL RECORDING SECTION */}
+      <section className="phonation-section">
+        <div className="section-header">
+          <h2 className="section-title">Vowel Recording</h2>
+          <p className="section-subtitle">Record all 4 vowels to proceed to next assessment</p>
+        </div>
+        <div className="vowel-grid">
+          {VOWEL_ITEMS.map((item, idx) => {
+            const meta = stateMap[item.id] || {};
+            return (
+              <div
+                key={item.id}
+                className="vowel-card glass-card"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="card-header">
+                  <h3 className="card-vowel-label">{item.label}</h3>
+                  <div className="card-timer">
+                    {meta.recording ? (
+                      <>
+                        <div className="rec-dot" />
+                        {timer.toFixed(1)}s
+                      </>
+                    ) : meta.duration ? (
+                      `${meta.duration}s`
+                    ) : (
+                      "—"
+                    )}
+                  </div>
+                </div>
+
+                {/* Waveform Display */}
+                <div className="card-waveform">
+                  <WaveformCanvas
+                    waveform={meta.waveform || []}
+                    samplingRate={meta.samplingRate || 16000}
+                    isRecording={meta.recording}
+                  />
+                </div>
+
+                {/* Controls */}
+                <div className="card-controls">
+                  <button
+                    className={`btn-record ${meta.recording ? "recording" : ""} ${meta.duration > 0 ? "completed" : ""}`}
+                    onClick={() => toggleRecording(item.id)}
+                  >
+                    {meta.recording ? "🛑 Stop" : meta.duration > 0 ? "🔄 Re-record" : "🎤 Record"}
+                  </button>
+                  <button
+                    className={`btn-play ${meta.audioUrl ? "active" : "disabled"}`}
+                    disabled={!meta.audioUrl}
+                    onClick={() => handlePlay(item.id)}
+                  >
+                    ▶️ Play
+                  </button>
+                </div>
+
+                {/* Status */}
+                {meta.duration > 0 && (
+                  <div className="card-status">
+                    <span className="status-badge ready">✓ Ready</span>
+                    <span className="status-value">{meta.duration}s recorded</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* MPD RESULTS SECTION */}
+      <section className="phonation-section">
+        <div className="section-header">
+          <h2 className="section-title">Maximum Phonation Duration (MPD) Results</h2>
+          <p className="section-subtitle">Clinical analysis of your phonation duration</p>
+        </div>
+        
+        <div className="results-container">
+          {/* Individual MPD Values */}
+          <div className="results-box glass-card">
+            <h3 className="results-subtitle">Individual Sound MPD Values</h3>
+            <div className="mpd-meters">
+              {VOWEL_ITEMS.map((item) => (
+                <div key={item.id} className="meter-group">
+                  <label className="meter-sound-label">{item.label}</label>
+                  <LevelMeter
+                    value={stateMap[item.id]?.duration || 0}
+                    maxValue={Math.max(...Object.values(mpdReferences).map(r => r.max))}
+                    patientType={patientType}
+                    showReference={false}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Best MPD with Clinical Reference */}
+          <div className="results-box highlight glass-card">
+            <h3 className="results-subtitle">Best MPD (Highest Duration)</h3>
+            <div className="best-mpd-display">
+              <div className="best-mpd-value">
+                {bestMPD > 0 ? `${bestMPD}s` : "—"}
+              </div>
+              {bestMPD > 0 && (
+                <div className="clinical-reference">
+                  <p className="reference-text">
+                    Clinical Reference ({patientType.replace("_", " ").toUpperCase()}):
+                  </p>
+                  <p className="reference-range">
+                    {ref.min} - {ref.max} seconds
+                  </p>
+                  <LevelMeter
+                    value={bestMPD}
+                    maxValue={ref.max}
+                    patientType={patientType}
+                    showReference={true}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="actions-row">
-          <button className="primary-button" onClick={handleFinish}>
-            Save & Return to Assessment Home
+        {/* Action Buttons */}
+        <div className="action-buttons">
+          <button className="btn-primary glass-btn" onClick={handleContinueToSZ}>
+            Continue to S/Z Assessment →
+          </button>
+          <button className="btn-secondary glass-btn" onClick={handleFinish}>
+            Save & Return Home
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
