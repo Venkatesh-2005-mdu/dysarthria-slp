@@ -1,117 +1,237 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import "./PatientHistory.css";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import './PatientHistory.css';
 
-export default function PatientHistory({ patientsProp = null, onView = null }) {
+const PatientHistory = () => {
+  const { patientId } = useParams();
   const navigate = useNavigate();
+  const [patient, setPatient] = useState(null);
+  const [assessments, setAssessments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const samplePatients = [
-    { id: "P001", name: "Arjun Kumar", age: 8, lastVisit: "2025-11-12", status: "Active" },
-    { id: "P002", name: "Meera Devi", age: 5, lastVisit: "2025-12-03", status: "Follow-up" },
-    { id: "P003", name: "Rahul Singh", age: 10, lastVisit: "2025-10-28", status: "Closed" },
-    { id: "P004", name: "Sahana R", age: 6, lastVisit: "2025-11-11", status: "Active" },
-    { id: "P005", name: "Venkatesh M", age: 19, lastVisit: "2025-12-05", status: "Follow-up" }
-  ];
-
-  const patients = patientsProp && Array.isArray(patientsProp) ? patientsProp : samplePatients;
-
-  const [query, setQuery] = useState("");
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return patients;
-    return patients.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      p.id.toLowerCase().includes(q)
-    );
-  }, [query, patients]);
-
-  const handleView = (id) => {
-    if (typeof onView === "function") {
-      onView(id);
-      return;
+  useEffect(() => {
+    // Load patient data
+    const patients = localStorage.getItem('patients');
+    if (patients) {
+      const patientsList = JSON.parse(patients);
+      const foundPatient = patientsList.find((p) => p.id === patientId);
+      if (foundPatient) {
+        setPatient(foundPatient);
+        setAssessments(foundPatient.assessments || []);
+      }
     }
-    navigate(`/patient/${id}`);
+    setLoading(false);
+    // Scroll to top on mount
+    window.scrollTo(0, 0);
+  }, [patientId]);
+
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+
+  if (!patient) {
+    return (
+      <div className="error-state glass-card">
+        <h2>Patient Not Found</h2>
+        <button className="btn btn-primary" onClick={() => navigate('/dashboard')}>
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const handleStartAssessment = () => {
+    // Store the current patient ID so AssessmentHome can access it
+    sessionStorage.setItem('currentPatientId', patientId);
+    navigate('/assessmenthome');
   };
 
-  const initials = (name) =>
-    name
-      .split(" ")
-      .map(n => n[0] || "")
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
+  const handleViewReport = (assessmentId) => {
+    navigate(`/report/${patientId}/${assessmentId}`);
+  };
+
+  // Auto-calculate current age
+  const dob = new Date(patient.dob);
+  const today = new Date();
+  let currentAge = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    currentAge--;
+  }
 
   return (
-    <div className="phv2-page">
+    <div className="history-wrapper">
+      {/* Navigation */}
+      <nav className="history-navbar">
+        <button className="back-btn" onClick={() => navigate('/dashboard')}>
+          ← Back to Dashboard
+        </button>
+        <h1 className="nav-title">Patient History</h1>
+      </nav>
 
-      {/* LEFT COLUMN — title and search */}
-      <div className="phv2-left-col">
-        <div className="phv2-header">
-          <h1 className="phv2-title">Patient History</h1>
-          <p className="phv2-sub">Search records, view reports and continue assessments.</p>
+      {/* Main Content */}
+      <div className="history-content">
+        {/* Patient Header Card */}
+        <div className="patient-header glass-card">
+          <div className="header-main">
+            <div className="patient-avatar">{patient.name.charAt(0).toUpperCase()}</div>
+            <div className="patient-info">
+              <h1 className="patient-name">{patient.name}</h1>
+              <p className="patient-ref">Ref: {patient.referenceNo}</p>
+            </div>
+          </div>
 
-          <div className="phv2-search">
-            <label className="phv2-search-label" htmlFor="ph-search">
-              <svg className="phv2-search-icon" viewBox="0 0 24 24">
-                <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="2" fill="none"/>
-              </svg>
-            </label>
-
-            <input
-              id="ph-search"
-              className="phv2-search-input"
-              placeholder="Search by name or ID (e.g. Arjun or P001)"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+          <div className="patient-details-grid">
+            <div className="detail-box">
+              <span className="detail-label">Current Age</span>
+              <span className="detail-value">{currentAge} years</span>
+            </div>
+            <div className="detail-box">
+              <span className="detail-label">Gender</span>
+              <span className="detail-value">{patient.gender}</span>
+            </div>
+            <div className="detail-box">
+              <span className="detail-label">DOB</span>
+              <span className="detail-value">{new Date(patient.dob).toLocaleDateString()}</span>
+            </div>
+            <div className="detail-box">
+              <span className="detail-label">Registered</span>
+              <span className="detail-value">{patient.registrationDate}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* RIGHT COLUMN — card list */}
-      <div className="phv2-right-col">
-        <div className="phv2-list-wrap">
-          {filtered.length === 0 ? (
-            <div className="phv2-empty">No records found for “{query}”</div>
+        {/* Clinical Details Section */}
+        <div className="clinical-section glass-card">
+          <h2 className="section-title">📋 Clinical Details</h2>
+
+          <div className="details-tabs">
+            {patient.briefHistory && (
+              <div className="detail-tab">
+                <h3>Brief History</h3>
+                <p>{patient.briefHistory}</p>
+              </div>
+            )}
+            {patient.medicalHistory && (
+              <div className="detail-tab">
+                <h3>Medical History</h3>
+                <p>{patient.medicalHistory}</p>
+              </div>
+            )}
+            {patient.rehabilitationHistory && (
+              <div className="detail-tab">
+                <h3>Rehabilitation History</h3>
+                <p>{patient.rehabilitationHistory}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* General Status Section (if available) */}
+        {patient.generalStatus && Object.values(patient.generalStatus).some((v) => v) && (
+          <div className="general-status glass-card">
+            <h2 className="section-title">🏥 General Status</h2>
+
+            <div className="status-grid">
+              {patient.generalStatus.mentalStatus && (
+                <div className="status-item">
+                  <h4>Mental Status</h4>
+                  <p>{patient.generalStatus.mentalStatus}</p>
+                </div>
+              )}
+              {patient.generalStatus.physicalStatus && (
+                <div className="status-item">
+                  <h4>Physical Status</h4>
+                  <p>{patient.generalStatus.physicalStatus}</p>
+                </div>
+              )}
+              {patient.generalStatus.emotionalStatus && (
+                <div className="status-item">
+                  <h4>Emotional Status</h4>
+                  <p>{patient.generalStatus.emotionalStatus}</p>
+                </div>
+              )}
+              {patient.generalStatus.cognitiveStatus && (
+                <div className="status-item">
+                  <h4>Cognitive Status</h4>
+                  <p>{patient.generalStatus.cognitiveStatus}</p>
+                </div>
+              )}
+              {patient.generalStatus.memory && (
+                <div className="status-item">
+                  <h4>Memory</h4>
+                  <p>{patient.generalStatus.memory}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Sensory Profile Section (if available) */}
+        {patient.sensoryProfile && Object.values(patient.sensoryProfile).some((v) => v) && (
+          <div className="sensory-section glass-card">
+            <h2 className="section-title">👁️ 👂 Sensory Profile</h2>
+
+            <div className="sensory-grid">
+              {patient.sensoryProfile.hearing && (
+                <div className="sensory-item">
+                  <h4>👂 Hearing</h4>
+                  <p>{patient.sensoryProfile.hearing}</p>
+                </div>
+              )}
+              {patient.sensoryProfile.vision && (
+                <div className="sensory-item">
+                  <h4>👁️ Vision</h4>
+                  <p>{patient.sensoryProfile.vision}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Assessments Section */}
+        <div className="assessments-section">
+          <div className="assessments-header glass-card">
+            <h2 className="section-title">📊 Assessment History</h2>
+            <button className="btn btn-primary" onClick={handleStartAssessment}>
+              ➕ New Assessment
+            </button>
+          </div>
+
+          {assessments.length === 0 ? (
+            <div className="empty-assessments glass-card">
+              <div className="empty-icon">📋</div>
+              <h4>No Assessments Yet</h4>
+              <p>Start a new assessment to track patient progress</p>
+              <button className="btn btn-primary" onClick={handleStartAssessment}>
+                Begin Assessment
+              </button>
+            </div>
           ) : (
-            filtered.map((p, i) => (
-              <article
-                key={p.id}
-                className="phv2-card"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <div className="phv2-left">
-                  <div className="phv2-avatar">{initials(p.name)}</div>
-                  <div className="phv2-meta">
-                    <h3 className="phv2-name">{p.name}</h3>
-                    <div className="phv2-small">
-                      <span className="phv2-id">{p.id}</span> • <span>{p.age} yrs</span>
-                    </div>
+            <div className="assessments-list">
+              {assessments.map((assessment) => (
+                <div key={assessment.id} className="assessment-item glass-card">
+                  <div className="assessment-header">
+                    <h4 className="assessment-type">{assessment.type || 'Assessment'}</h4>
+                    <span className="assessment-date">{assessment.date}</span>
                   </div>
+                  <div className="assessment-details">
+                    <p className="assessment-notes">{assessment.notes || 'No notes'}</p>
+                  </div>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleViewReport(assessment.id)}
+                  >
+                    📄 View Report
+                  </button>
                 </div>
-
-                <div className="phv2-right">
-                  <div className="phv2-last">Last Visit</div>
-                  <div className="phv2-date">{p.lastVisit}</div>
-
-                  <div className={`phv2-badge phv2-badge-${p.status.replace(/\s+/g,'').toLowerCase()}`}>
-                    {p.status}
-                  </div>
-
-                  <div className="phv2-actions">
-                    <button className="phv2-btn" onClick={() => handleView(p.id)}>
-                      View Records
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>
-
     </div>
   );
-}
+};
+
+export default PatientHistory;

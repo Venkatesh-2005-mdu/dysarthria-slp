@@ -541,6 +541,55 @@ const RessonanceAndArticulationAssessment = () => {
     audio.play();
   };
 
+  // ============ CLEAR RECORDINGS ============
+  const clearResonanceRecording = () => {
+    if (resonanceRecording.audioUrl) {
+      URL.revokeObjectURL(resonanceRecording.audioUrl);
+    }
+    setResonanceRecording({
+      recording: false,
+      audioUrl: null,
+      blob: null,
+      duration: 0,
+      waveform: [],
+      samplingRate: 16000,
+      metrics: null,
+    });
+  };
+
+  const clearAmrRecording = (itemId) => {
+    const audioUrl = amrStateMap[itemId]?.audioUrl;
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAmrStateMap((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        recording: false,
+        audioUrl: null,
+        blob: null,
+        duration: 0,
+        waveform: [],
+        samplingRate: 16000,
+      },
+    }));
+  };
+
+  const clearSmrRecording = () => {
+    if (smrRecording.audioUrl) {
+      URL.revokeObjectURL(smrRecording.audioUrl);
+    }
+    setSmrRecording({
+      recording: false,
+      audioUrl: null,
+      blob: null,
+      duration: 0,
+      waveform: [],
+      samplingRate: 16000,
+    });
+  };
+
   // ============ NAVIGATION ============
   const handleFinish = () => {
     navigate("/assessmenthome");
@@ -647,7 +696,14 @@ const RessonanceAndArticulationAssessment = () => {
                 disabled={!resonanceRecording.audioUrl}
                 onClick={() => handlePlay(resonanceRecording.audioUrl, "resonance")}
               >
-                ▶️ Play
+                🔊 Play
+              </button>
+              <button
+                className="btn-clear"
+                disabled={!resonanceRecording.audioUrl}
+                onClick={clearResonanceRecording}
+              >
+                🗑 Clear
               </button>
             </div>
 
@@ -747,14 +803,21 @@ const RessonanceAndArticulationAssessment = () => {
                       className={`btn-record ${meta.recording ? "recording" : ""}`}
                       onClick={() => toggleAmrRecording(item.id)}
                     >
-                      {meta.recording ? "Stop" : "Record"}
+                      {meta.recording ? "🛑 Stop" : "🎤 Record"}
                     </button>
                     <button
                       className="btn-play"
                       disabled={!meta.audioUrl}
                       onClick={() => handleAmrPlay(item.id)}
                     >
-                      Play
+                      🔊 Play
+                    </button>
+                    <button
+                      className="btn-clear"
+                      disabled={!meta.audioUrl}
+                      onClick={() => clearAmrRecording(item.id)}
+                    >
+                      🗑 Clear
                     </button>
                   </div>
 
@@ -818,14 +881,21 @@ const RessonanceAndArticulationAssessment = () => {
                 className={`btn-record ${smrRecording.recording ? "recording" : ""}`}
                 onClick={toggleSmrRecording}
               >
-                {smrRecording.recording ? "Stop" : "Record"}
+                {smrRecording.recording ? "🛑 Stop" : "🎤 Record"}
               </button>
               <button
                 className="btn-play"
                 disabled={!smrRecording.audioUrl}
                 onClick={() => handlePlay(smrRecording.audioUrl, "smr")}
               >
-                Play
+                🔊 Play
+              </button>
+              <button
+                className="btn-clear"
+                disabled={!smrRecording.audioUrl}
+                onClick={clearSmrRecording}
+              >
+                🗑 Clear
               </button>
             </div>
 

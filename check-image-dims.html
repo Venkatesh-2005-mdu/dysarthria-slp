@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Image Dimensions</title>
+</head>
+<body>
+    <img id="testImg" src="src/images/mouth-anatomy.jpg" onload="checkDims()" style="display:none;">
+    <script>
+        function checkDims() {
+            const img = document.getElementById('testImg');
+            console.log(`Image width: ${img.naturalWidth}`);
+            console.log(`Image height: ${img.naturalHeight}`);
+            document.body.innerHTML = `<h1>Image Dimensions: ${img.naturalWidth}x${img.naturalHeight}</h1>`;
+        }
+    </script>
+</body>
+</html>

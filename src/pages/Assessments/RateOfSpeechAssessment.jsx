@@ -127,8 +127,21 @@ const RateOfSpeechAssessment = () => {
       const arrayBuffer = await blob.arrayBuffer();
       const ac = new (window.AudioContext || window.webkitAudioContext)();
       const decoded = await ac.decodeAudioData(arrayBuffer);
-      const audioData = Array.from(decoded.getChannelData(0));
-      const sampleRate = decoded.sampleRate;
+      let audioData = Array.from(decoded.getChannelData(0));
+      let sampleRate = decoded.sampleRate;
+      const originalLength = audioData.length;
+
+      // Downsample audio data if too large to reduce payload size
+      let downsampleFactor = 1;
+      if (audioData.length > 100000) {
+        downsampleFactor = Math.ceil(audioData.length / 100000);
+        audioData = audioData.filter((_, i) => i % downsampleFactor === 0);
+        // Adjust sample rate to maintain correct duration calculation
+        sampleRate = Math.round(sampleRate / downsampleFactor);
+      }
+
+      const actualDuration = originalLength / decoded.sampleRate;
+      console.log(`Sending ${type} with ${audioData.length} samples at ${sampleRate} Hz (original: ${originalLength} samples at ${decoded.sampleRate} Hz, duration: ${actualDuration.toFixed(2)}s)`);
 
       const res = await fetch(`${API_BASE}/api/analyze/rate-of-speech`, {
         method: "POST",
@@ -141,13 +154,17 @@ const RateOfSpeechAssessment = () => {
         }),
       });
 
-      if (!res.ok) throw new Error("Backend upload failed");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Backend upload failed");
+      }
 
       const result = await res.json();
       console.log(`${type} analysis:`, result);
       return result;
     } catch (err) {
       console.error("Backend upload error:", err);
+      alert(`Error analyzing speech: ${err.message}`);
       return null;
     }
   };
@@ -403,7 +420,7 @@ const RateOfSpeechAssessment = () => {
             <p><strong>Conversational Speech:</strong> Talk about a topic of your choice for 1-2 minutes. This assesses naturalistic speaking patterns.</p>
           </div>
           <div className="tip-item">
-            <span className="tip-icon">⏱️</span>
+            <span className="tip-icon">⏱</span>
             <p><strong>Timing Matters:</strong> The system calculates Words Per Minute (WPM) automatically from your recording duration.</p>
           </div>
         </div>
@@ -464,7 +481,7 @@ const RateOfSpeechAssessment = () => {
                 className={`btn-record ${rainbowRecording.recording ? "recording" : ""}`}
                 onClick={toggleRainbowRecording}
               >
-                {rainbowRecording.recording ? "⏹️ Stop Recording" : "🎤 Start Recording"}
+                {rainbowRecording.recording ? "⏹ Stop Recording" : "🎤 Start Recording"}
               </button>
               <button
                 className="btn-play"
@@ -478,7 +495,7 @@ const RateOfSpeechAssessment = () => {
                 onClick={clearRainbowRecording}
                 disabled={!rainbowRecording.audioUrl}
               >
-                🗑️ Clear
+                🗑 Clear
               </button>
             </div>
 
@@ -632,7 +649,7 @@ const RateOfSpeechAssessment = () => {
                 className={`btn-record ${conversationalRecording.recording ? "recording" : ""}`}
                 onClick={toggleConversationalRecording}
               >
-                {conversationalRecording.recording ? "⏹️ Stop Recording" : "🎤 Start Recording"}
+                {conversationalRecording.recording ? "⏹ Stop Recording" : "🎤 Start Recording"}
               </button>
               <button
                 className="btn-play"
@@ -646,7 +663,7 @@ const RateOfSpeechAssessment = () => {
                 onClick={clearConversationalRecording}
                 disabled={!conversationalRecording.audioUrl}
               >
-                🗑️ Clear
+                🗑 Clear
               </button>
             </div>
 
@@ -694,7 +711,7 @@ const RateOfSpeechAssessment = () => {
                   <div className="pause-info">
                     <p>
                       Pauses: {conversationalRecording.metrics.pause_count} |
-                      Duration: {conversationalRecording.metrics.pause_duration}s
+                      Duration: {conversationalRecording.metrics.pause_duration_sec}s
                     </p>
                   </div>
                 )}

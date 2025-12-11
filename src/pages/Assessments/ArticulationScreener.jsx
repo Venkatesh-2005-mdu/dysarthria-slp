@@ -172,6 +172,12 @@ const ArticulationScreener = () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         await analyzeAudioBlob(blob, wordId);
         startSpeechRecognition(wordId);
+        
+        // Save blob to state so it can be played back
+        setRecordingState((prev) => ({
+          ...prev,
+          [wordId]: { ...prev[wordId], blob },
+        }));
       };
 
       mediaRecorderRef.current.start();
@@ -355,7 +361,7 @@ const ArticulationScreener = () => {
             <p><strong>Record Each Word:</strong> Click the record button for each Tamil word and speak clearly at natural speaking rate.</p>
           </div>
           <div className="tip-item">
-            <span className="tip-icon">✍️</span>
+            <span className="tip-icon">✍</span>
             <p><strong>Scoring Criteria:</strong> Rate each word using S (Severe), O (Obligatory), D (Distorted), A (Age-appropriate) categories.</p>
           </div>
           <div className="tip-item">
@@ -417,7 +423,7 @@ const ArticulationScreener = () => {
                       }}
                     >
                       {recordingState[word.id]?.recording
-                        ? `⏹️ Stop (${((Date.now() - recordingState[word.id].startTime) / 1000).toFixed(1)}s)`
+                        ? `⏹ Stop (${((Date.now() - recordingState[word.id].startTime) / 1000).toFixed(1)}s)`
                         : "🎤 Record"}
                     </button>
 
@@ -441,7 +447,7 @@ const ArticulationScreener = () => {
                           clearRecording(word.id);
                         }}
                       >
-                        🗑️ Clear
+                        🗑 Clear
                       </button>
                     )}
                   </div>
@@ -462,7 +468,7 @@ const ArticulationScreener = () => {
                     <label>Transcribed Text:</label>
                     <div className="transcription-box">
                       {speechRecognitionActive ? (
-                        <p className="listening">🎙️ Listening...</p>
+                        <p className="listening">🎙 Listening...</p>
                       ) : recognizedText[word.id] ? (
                         <p className="text">{recognizedText[word.id]}</p>
                       ) : (

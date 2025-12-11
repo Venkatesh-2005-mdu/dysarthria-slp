@@ -39,20 +39,39 @@ class RateOfSpeechResponse(BaseModel):
     pause_duration_sec: float = 0.0
 
 
-def estimate_wpm_from_duration(duration_sec: float) -> tuple[float, int]:
+def estimate_wpm_from_duration(duration_sec: float, audio_array: np.ndarray = None, sample_rate: int = None) -> tuple[float, int]:
     """
     Estimate words per minute and word count for conversational speech
-    Using typical conversational rate of ~2 words per second
+    Uses improved estimation based on speech activity (excluding pauses)
     
     Args:
         duration_sec: Duration of speech in seconds
+        audio_array: Audio waveform (optional, for more accurate pause-aware estimation)
+        sample_rate: Sample rate (optional, required if audio_array provided)
     
     Returns:
         Tuple of (estimated_wpm, estimated_word_count)
     """
-    CONVERSATIONAL_WORDS_PER_SECOND = 2.0  # Average conversational speech rate
-    estimated_words = int(duration_sec * CONVERSATIONAL_WORDS_PER_SECOND)
+    # Clinical reference: Average conversational speech is 120-150 WPM
+    # With pauses, active speech time is typically 60-70% of total time
+    
+    active_speech_duration = duration_sec
+    
+    # If audio data provided, calculate actual speaking time (excluding pauses)
+    if audio_array is not None and sample_rate is not None:
+        pause_count, pause_duration_sec = detect_pauses(audio_array, sample_rate)
+        active_speech_duration = max(duration_sec - pause_duration_sec, duration_sec * 0.5)  # Min 50% speech
+    
+    # Use adaptive word rate based on speech characteristics
+    # Base rate: 2.0 words per second of active speech
+    # This yields ~120 WPM for normal speech (120 / 60 = 2 words/sec)
+    CONVERSATIONAL_WORDS_PER_SECOND = 2.0
+    estimated_words = int(active_speech_duration * CONVERSATIONAL_WORDS_PER_SECOND)
+    
+    # Calculate WPM based on total duration (not active duration)
+    # This gives a more realistic "overall" speaking rate
     wpm = (estimated_words / duration_sec) * 60 if duration_sec > 0 else 0
+    
     return wpm, estimated_words
 
 
@@ -195,8 +214,8 @@ async def analyze_rate_of_speech(request: RateOfSpeechRequest = Body(...)) -> Ra
             estimated_words = None
         
         elif request.type == "conversational":
-            # Conversational: Estimate based on typical rate
-            wpm, estimated_words = estimate_wpm_from_duration(duration_sec)
+            # Conversational: Estimate based on actual speech activity (excluding pauses)
+            wpm, estimated_words = estimate_wpm_from_duration(duration_sec, audio_array, request.sample_rate)
         
         else:
             raise ValueError(f"Invalid assessment type: {request.type}")

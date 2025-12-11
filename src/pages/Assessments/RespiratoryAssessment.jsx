@@ -12,6 +12,11 @@ export default function RespiratoryAssessment() {
     blowingTime: "",
   });
 
+  // Scroll to top on component mount
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
