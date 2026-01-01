@@ -53,38 +53,36 @@ const WaveformCanvas = ({ blob, waveform = [], samplingRate = 16000, isRecording
       return;
     }
 
-    // Draw waveform (main visualization)
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "#1d3c6a";
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.beginPath();
+    // Draw waveform (Praat-style per-pixel min/max envelope)
+    // For each canvas pixel column, compute the min and max sample
+    // within the corresponding sample range and draw a filled vertical
+    // bar between those values. This produces the same dense envelope
+    // visualization Praat uses for large audio files.
+    const samplesPerPixel = Math.max(1, Math.floor(waveform.length / width));
+    ctx.fillStyle = "#1d3c6a";
 
-    const step = Math.ceil(waveform.length / width);
-    let isFirstPoint = true;
+    for (let x = 0; x < width; x++) {
+      const startIdx = x * samplesPerPixel;
+      const endIdx = Math.min(startIdx + samplesPerPixel, waveform.length);
 
-    for (let i = 0; i < width; i++) {
-      const startIdx = i * step;
-      let sum = 0;
-      let count = 0;
+      let min = 1.0;
+      let max = -1.0;
 
-      for (let j = 0; j < step && startIdx + j < waveform.length; j++) {
-        sum += Math.abs(waveform[startIdx + j] || 0);
-        count++;
+      for (let s = startIdx; s < endIdx; s++) {
+        const v = waveform[s] || 0;
+        if (v < min) min = v;
+        if (v > max) max = v;
       }
 
-      const avgAmplitude = count ? sum / count : 0;
-      const clampedAmplitude = Math.min(1, avgAmplitude * 4); // Scale for visibility
-      const y = (1 - clampedAmplitude) * height;
+      // Map sample values (-1..1) to canvas Y coordinates (0..height)
+      const yMax = (1 - ((max + 1) / 2)) * height;
+      const yMin = (1 - ((min + 1) / 2)) * height;
 
-      if (isFirstPoint) {
-        ctx.moveTo(i, y);
-        isFirstPoint = false;
-      } else {
-        ctx.lineTo(i, y);
-      }
+      const barTop = Math.min(yMax, yMin);
+      const barHeight = Math.max(1, Math.abs(yMin - yMax));
+
+      ctx.fillRect(x, barTop, 1, barHeight);
     }
-    ctx.stroke();
 
     // Draw frequency spectrum overlay (simplified visualization)
     drawFrequencySpectrum(ctx, waveform, width, height);
