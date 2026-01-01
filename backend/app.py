@@ -26,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routes
+# Register API routes
 app.include_router(general_router, prefix="/api/analyze")
 app.include_router(vowel_router, prefix="/api/analyze")
 app.include_router(pataka_router, prefix="/api/analyze")
@@ -36,22 +36,14 @@ app.include_router(rate_of_speech_router, prefix="/api/analyze")
 app.include_router(articulation_screener_router, prefix="/api/analyze")
 
 
-@app.get("/")
-def home():
-    return {"message": "SLP Backend Running Successfully"}
-
-
-# Serve static frontend files
+# Serve static frontend files AFTER all API routes
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
-else:
-    # Fallback if frontend build doesn't exist
-    @app.get("/{path:path}")
-    def fallback(path: str):
-        return {"error": "Frontend not built. Run 'npm run build' in root directory."}
 
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
