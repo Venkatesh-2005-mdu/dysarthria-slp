@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
+from pathlib import Path
 
 # Import routers correctly (NO 'backend.' prefix)
 from routes.analyze_general import router as general_router
@@ -37,6 +39,17 @@ app.include_router(articulation_screener_router, prefix="/api/analyze")
 @app.get("/")
 def home():
     return {"message": "SLP Backend Running Successfully"}
+
+
+# Serve static frontend files
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
+else:
+    # Fallback if frontend build doesn't exist
+    @app.get("/{path:path}")
+    def fallback(path: str):
+        return {"error": "Frontend not built. Run 'npm run build' in root directory."}
 
 
 if __name__ == "__main__":
