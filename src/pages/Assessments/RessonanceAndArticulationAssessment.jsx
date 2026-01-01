@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AnnotatedWaveformCanvas from "../../components/AnnotatedWaveformCanvas";
+import API_BASE from "../../config/api";
 import "./RessonanceAndArticulationAssessment.css";
 
 /**
  * RessonanceAndArticulationAssessment.jsx
  * Combines Resonance Test (with audio-based calculation) and Articulation Tests (AMR/SMR)
  */
-
-const API_BASE = "http://localhost:8000";
 
 const AMR_ITEMS = [
   { id: "pa", label: "/PA/" },

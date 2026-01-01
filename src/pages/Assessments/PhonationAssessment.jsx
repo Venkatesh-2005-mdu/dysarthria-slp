@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AnnotatedWaveformCanvas from "../../components/AnnotatedWaveformCanvas";
 import LevelMeter from "../../components/LevelMeter";
 import RealtimeAudioCapture from "../../utils/realtimeAudioCapture";
+import API_BASE from "../../config/api";
 import "./PhonationAssessment.css";
 
 /**
@@ -10,8 +11,6 @@ import "./PhonationAssessment.css";
  * Updated: Vowel recording with MPD calculation and level meters
  * Records only A, II, U, UHM for MPD calculation
  */
-
-const API_BASE = "http://localhost:8000";
 
 const VOWEL_ITEMS = [
   { id: "a", label: "/A/" },

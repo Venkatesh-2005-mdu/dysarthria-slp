@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AnnotatedWaveformCanvas from "../../components/AnnotatedWaveformCanvas";
 import LevelMeter from "../../components/LevelMeter";
+import API_BASE from "../../config/api";
 import "./SZAssessment.css";
 
 /**
@@ -9,8 +10,6 @@ import "./SZAssessment.css";
  * Separate S and Z recording with S/Z ratio calculation
  * Shows pathology interpretation
  */
-
-const API_BASE = "http://localhost:8000";
 
 const SZAssessment = () => {
   const navigate = useNavigate();

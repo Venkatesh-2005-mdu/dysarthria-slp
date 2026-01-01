@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AnnotatedWaveformCanvas from "../../components/AnnotatedWaveformCanvas";
+import API_BASE from "../../config/api";
 import "./RateOfSpeechAssessment.css";
 
 /**
  * RateOfSpeechAssessment.jsx
  * Analyzes speech rate (WPM) for both rainbow passage reading and conversational speech
  */
-
-const API_BASE = "http://localhost:8000";
 
 const RAINBOW_PASSAGE = `When the sunlight strikes raindrops in the air, they act like tiny prisms. The light is refracted, or bent, passing through each water droplet at a slightly different angle. This results in the rainbow effect we all know and love.
 

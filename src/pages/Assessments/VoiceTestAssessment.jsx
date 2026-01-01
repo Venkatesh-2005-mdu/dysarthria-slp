@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AnnotatedWaveformCanvas from "../../components/AnnotatedWaveformCanvas";
+import API_BASE from "../../config/api";
 import "./VoiceTestAssessment.css";
 
 /**
@@ -8,8 +9,6 @@ import "./VoiceTestAssessment.css";
  * Comprehensive voice quality assessment
  * Measures: MPFR, DSI, jitter, shimmer, and overall voice quality
  */
-
-const API_BASE = "http://localhost:8000";
 
 const VOICE_TEST_ITEMS = [
   { id: "a_phonation", label: "A-Phonation", description: "Sustain /A/ at comfortable pitch and loudness" },
